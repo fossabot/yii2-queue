@@ -8,14 +8,38 @@
 
 namespace yii\queue\drivers;
 
-use \yii\queue\interfaces\ConnectionInterface;
+use \yii\queue\interfaces\DriverInterface;
 
 /**
  * PgsqlConnection
  *
  * @author Anton Ermolovich <anton.ermolovich@gmail.com>
  */
-class PgsqlConnection extends \yii\base\Component implements ConnectionInterface
+class PgsqlConnection extends \yii\base\Component implements DriverInterface
 {
-	//put your code here
+	public function delete(array $message)
+	{
+		
+	}
+
+	public function pop($queue)
+	{
+		
+	}
+
+	public function purge($queue)
+	{
+		
+	}
+
+	public function push($payload, $queue, $delay = 0)
+	{
+		
+	}
+
+	public function release(array $message, $delay = 0)
+	{
+		
+	}
+
 }
