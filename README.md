@@ -46,7 +46,7 @@ Before use apply migrations:
 
 #### Push message to queue:
 ```php
-Yii::$app->queue->getChannel('parser')->push(
+Yii::$app->queue->getChannel('default')->push(
     new MessageModel([
         'worker' => 'test',
         'method' => 'actionSayHello',
