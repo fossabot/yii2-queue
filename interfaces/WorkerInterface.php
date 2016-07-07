@@ -16,20 +16,20 @@ namespace yii\queue\interfaces;
 interface WorkerInterface
 {
 
-	/**
-	 * Run worker
-	 */
-	public function run();
-	
-	/**
-	 * Stop worker
-	 */
-	public function stop();
-	
-	/**
-	 * Set Options
-	 *
-	 * @param array $options
-	 */
-	public function setOptions(array $options);
+    /**
+     * Run worker
+     */
+    public function run();
+
+    /**
+     * Stop worker
+     */
+    public function stop();
+
+    /**
+     * Set Options
+     *
+     * @param array $options
+     */
+    public function setOptions(array $options);
 }

@@ -9,18 +9,15 @@
     "license": "BSD-3-Clause",
     "authors": [
         {
-            "name": "Alexander Kochetov",
-            "email": "creocoder@gmail.com"
+            "name": "Mitrofanov Nikolay",
+            "email": "mitrofanovnk@gmail.com"
         }
     ],
     "require": {
         "yiisoft/yii2": "~2.0.0"
     },
     "require-dev": {
-        "aws/aws-sdk-php": "~3.0",
-        "predis/predis": "~1.0",
-        "phpunit/phpunit": "~4.0",
-        "phpunit/dbunit": "~1.0"
+        "amphp/amp": "^1"
     },
     "autoload": {
         "psr-4": {

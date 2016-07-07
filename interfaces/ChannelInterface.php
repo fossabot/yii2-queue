@@ -7,6 +7,7 @@
  */
 
 namespace yii\queue\interfaces;
+use yii\queue\models\MessageModel;
 
 /**
  * Channel inteface
@@ -16,68 +17,65 @@ namespace yii\queue\interfaces;
 interface ChannelInterface
 {
 
-	/**
-	 * Create channel
-	 *
-	 * @param array $options
-	 */
-	public function create(array $options);
+    /**
+     * Create channel
+     *
+     * @param array $options
+     */
+    public function create(array $options);
 
-	/**
-	 * Open channel connection
-	 */
-	public function open();
+    /**
+     * Open channel connection
+     */
+    public function open();
 
-	/**
-	 * Close channel connection
-	 */
-	public function close();
+    /**
+     * Close channel connection
+     */
+    public function close();
 
-	/**
-	 * Send data to channel connection
-	 *
-	 * @param type $name
-	 * @param type $data
-	 */
-	public function send($name, $data);
+    /**
+     * Send data to channel connection
+     *
+     * @param string $name
+     * @param mixed $data
+     */
+    public function send($name, $data);
 
-	/**
-	 * Push payload to the queue.
-	 *
-	 * @param mixed $payload
-	 * @param integer $delay
-	 * @param string $queue
-	 * @return string
-	 */
-	public function push($payload, $queue, $delay = 0);
+    /**
+     * Push message to the queue.
+     *
+     * @param mixed $message
+     * @param integer $delay
+     * @return string
+     */
+    public function push(MessageModel $message, $delay = 0);
 
-	/**
-	 * Pops message from the queue.
-	 *
-	 * @param string $queue
-	 * @return array|false
-	 */
-	public function pop($queue);
+    /**
+     * Pops message from the queue.
+     *
+     * @return array|false
+     */
+    public function pop();
 
-	/**
-	 * Purge the queue.
-	 *
-	 * @param string $queue
-	 */
-	public function purge($queue);
+    /**
+     * Purge the queue.
+     *
+     */
+    public function purge();
 
-	/**
-	 * Release the message.
-	 *
-	 * @param array $message
-	 * @param integer $delay
-	 */
-	public function release(array $message, $delay = 0);
+    /**
+     * Release the message.
+     *
+     * @param array $message
+     * @param integer $delay
+     */
+    public function release(array $message, $delay = 0);
 
-	/**
-	 * Delete the message.
-	 *
-	 * @param array $message
-	 */
-	public function delete(array $message);
+    /**
+     * Delete the message.
+     *
+     * @param array $message
+     */
+    public function delete(array $message);
 }
