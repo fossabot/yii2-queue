@@ -4,7 +4,7 @@ Yii 2.0 Queue Extension
 Non blocking queue manager for Yii 2.0
 
 #####Install:
-`php composer.phar require argayash/yii2-queue:hakaton-tass`
+`php composer.phar require argayash/yii2-queue "dev-hakaton-tass"`
 
 #####Config:
 ```php
