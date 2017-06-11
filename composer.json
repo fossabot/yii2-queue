@@ -1,5 +1,5 @@
 {
-    "name": "argayash/yii2-queue",
+    "name": "mirocow/yii2-queue",
     "description": "The queue extension for the Yii framework",
     "keywords": [
         "yii2",
@@ -11,7 +11,11 @@
         {
             "name": "Mitrofanov Nikolay",
             "email": "mitrofanovnk@gmail.com"
-        }
+        },
+        {
+            "name": "Mirocow",
+            "email": "mr.mirocow@gmail.com"
+        }        
     ],
     "require": {
         "yiisoft/yii2": "~2.0.0",
