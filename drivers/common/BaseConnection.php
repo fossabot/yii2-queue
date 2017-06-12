@@ -15,4 +15,5 @@ abstract class BaseConnection extends \yii\base\Component implements DriverInter
     const STATUS_DELETE = -1;
     const STATUS_WAITING = 2;
 
+    public $timeout = 100;
 }

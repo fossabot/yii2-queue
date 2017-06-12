@@ -123,6 +123,10 @@ class MysqlConnection extends BaseConnection
      */
     public function push(string $payload, string $queueName, $delay = 0, $priority = NULL)
     {
+        if ($delay !== null) {
+            throw new NotSupportedException('Job delay is not supported in the driver.');
+        }
+
         if ($priority !== null) {
             throw new NotSupportedException('Job priority is not supported in the driver.');
         }

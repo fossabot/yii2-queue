@@ -45,7 +45,7 @@ class RedisConnection extends BaseConnection
      * @param int $timeout
      * @return array|null
      */
-	public function pop(string $queueName, $timeout = 3600)
+	public function pop(string $queueName)
 	{
         // Move delayed messages into waiting
         if ($this->now < time()) {
@@ -53,24 +53,29 @@ class RedisConnection extends BaseConnection
             if ($delayed = $this->connection->zrevrangebyscore($queueName.'.delayed', $this->now, '-inf')) {
                 $this->connection->zremrangebyscore($queueName.'.delayed', '-inf', $this->now);
                 foreach ($delayed as $id) {
+                    if(!is_numeric($id)) continue;
                     $this->connection->rpush($queueName.'.waiting', $id);
                 }
             }
         }
 
         // Find a new waiting message
-        if (!$timeout) {
+        if (!$this->timeout) {
             if ($id = $this->connection->rpop($queueName.'.waiting')) {
-                $message = $this->connection->hget($queueName.'.messages', $id);
-                $this->connection->hdel("{$queueName}.messages", $id);
-                return $message;
+                if(is_numeric($id)) {
+                    $message = $this->connection->hget($queueName . '.messages', $id);
+                    $this->connection->hdel("{$queueName}.messages", $id);
+                    return $message;
+                }
             }
         } else {
-            if ($result = $this->connection->brpop("{$queueName}.waiting", $timeout)) {
-                $id = $result[1];
-                $message = $this->connection->hget("{$queueName}.messages", $id);
-                $this->connection->hdel("{$queueName}.messages", $id);
-                return $message;
+            if ($result = $this->connection->brpop("{$queueName}.waiting", $this->timeout)) {
+                if(count($result) == 2 && is_numeric($result[1])) {
+                    $id = $result[1];
+                    $message = $this->connection->hget("{$queueName}.messages", $id);
+                    $this->connection->hdel("{$queueName}.messages", $id);
+                    return $message;
+                }
             }
         }
 
@@ -139,7 +144,11 @@ class RedisConnection extends BaseConnection
                 return self::STATUS_DONE;
             }
         } else {
+	        $waiting = $this->getWaitingCount($queueName);
+	        $delayed = $this->getDelayedCount($queueName);
+            $done = $this->getDoneCount($queueName);
 
+	        echo "Queue name: {$queueName}\nWaiting: {$waiting}\nDelayed: {$delayed}\nDone: {$done}\n\n";
         }
     }
 

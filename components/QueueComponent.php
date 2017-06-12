@@ -20,7 +20,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     public $channels = [];
     public $workers = [];
     public $timer_tick = 1000;
-    public $timer_keep_alive = false;
+    public $timer_keep_alive = true;
+    public $pidFile = '';
 
     protected $regWorkers = null;
     protected $regChannels = null;
@@ -150,6 +151,10 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
             $this->setPid(getmypid());
 
+            if($this->pidFile){
+                file_put_contents($this->pidFile, $this->getPid());
+            }
+
             echo "Queue Daemon is started with PID: " . $this->getPid() . "\n\n";
 
             if(true !== $this->addSignals()) {
@@ -161,11 +166,18 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
                 \Amp\repeat(function ($watcherId) use ($channel) {
 
-                    if ($message = $channel->pop()) {
-                        $this->processMessage($message, $watcherId);
-                        return true;
-                    } else {
-                        return false;
+                    try {
+                        if ($message = $channel->pop()) {
+                            $this->processMessage($message, $watcherId);
+                            return TRUE;
+                        }
+                        else {
+                            return FALSE;
+                        }
+                    } catch (\Exception $e){
+                        if($e->getCode() == 0) {
+                            return FALSE;
+                        }
                     }
 
                 }, $this->timer_tick,  $options = ['keep_alive' => $this->timer_keep_alive]);

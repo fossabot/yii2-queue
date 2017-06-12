@@ -164,7 +164,9 @@ class ChannelComponent extends Component implements ChannelInterface
     {
         $message = null;
         if ($rawMessage = $this->driver->pop($this->getQueueName())) {
-            $message = MessageModel::loadRawMessage($rawMessage);
+            if(is_string($rawMessage)){
+                $message = MessageModel::loadRawMessage($rawMessage);
+            }
         }
         return $message;
     }
