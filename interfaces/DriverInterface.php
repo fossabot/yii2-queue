@@ -1,12 +1,6 @@
 <?php
 
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
-
-namespace yii\queue\interfaces;
+namespace mirocow\queue\interfaces;
 
 /**
  * Driver inteface
@@ -18,13 +12,13 @@ interface DriverInterface
 
     /**
      * Push payload to the storage.
-     *
-     * @param mixed $message
-     * @param integer $delay
-     * @param string $queue
-     * @return string
+     * @param $message
+     * @param $queueName
+     * @param int $delay
+     * @param null $priority
+     * @return mixed
      */
-    public function push($message, $queue, $delay = 0);
+    public function push(string $payload, string $queueName, $delay = 0, $priority = NULL);
 
     /**
      * Pops message from the storage.
@@ -32,14 +26,14 @@ interface DriverInterface
      * @param string $queue
      * @return array|false
      */
-    public function pop($queue);
+    public function pop(string $queueName);
 
     /**
      * Purge the storage.
      *
      * @param string $queue
      */
-    public function purge($queue);
+    public function purge(string $queueName);
 
     /**
      * Release the message.
@@ -47,13 +41,20 @@ interface DriverInterface
      * @param array $message
      * @param integer $delay
      */
-    public function release(array $message, $delay = 0);
+    public function release(string $payload, string $queueName, $delay = 0);
 
     /**
      * Delete the message.
-     *
-     * @param array $message
+     * @param string $queueName
+     * @param string $payload
+     * @return mixed
      */
-    public function delete(array $message);
+    public function delete(string $queueName, string $payload);
+
+    /**
+     * @param string $queueName
+     * @return mixed
+     */
+    public function status(string $queueName);
 
 }

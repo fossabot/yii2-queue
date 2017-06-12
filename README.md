@@ -4,29 +4,31 @@ Yii 2.0 Queue Extension
 Non blocking queue manager for Yii 2.0
 
 #####Install:
-`php composer.phar require argayash/yii2-queue "dev-hakaton-tass"`
+
+`php composer.phar require mirocow/yii2-queue "dev-hakaton-tass"`
 
 #####Config:
+
 ```php
 'components' => [
     'queue' => [
-        'class' => \yii\queue\components\QueueComponent::className(),
+        'class' => 'mirocow\queue\components\QueueComponent',
         'queueName' => 'default-queue',
         'timeout' => 50, // optional
         'workers' => [
-            'test' => [
-                'class' => \yii\queue\components\WorkerComponent::className(),
+            'notification' => [
+                'class' => 'mirocow\queue\components\WorkerComponent',
                 'action' => [
-                    'class' => \console\controllers\TestController::className(),
+                    'class' => 'console\controllers\NotificationController',
                 ]
             ],
             ...
         ],
         'channels' => [
             'default' => [
-                'class' => \yii\queue\components\ChannelComponent::className(),
+                'class' => 'mirocow\queue\components\ChannelComponent',
                     'driver' => [
-                        'class' => \yii\queue\drivers\MysqlConnection::className(),
+                        'class' => 'mirocow\queue\drivers\MysqlConnection',
                         'connection' => 'db'
                     ]
                 ]
@@ -37,18 +39,33 @@ Non blocking queue manager for Yii 2.0
 ]
 ```
 
-Before use apply migrations:
+Before use apply migrations for using Mysql driver:
 ```php
 ./yii migrate/up --migrationPath=@vendor/argayash/yii2-queue/migrations
 ```
 
 ###Usage:
 
+#### Worker class:
+
+```php
+namespace \console\controllers;
+
+class NotificationController extends Controller
+{
+    public function actionSayHello($say)
+    {
+        \Yii::info($say);
+    }
+}
+```
+
 #### Push message to queue:
+
 ```php
 Yii::$app->queue->getChannel('default')->push(
     new MessageModel([
-        'worker' => 'test',
+        'worker' => 'notification',
         'method' => 'actionSayHello',
         'arguments' => [
             'say' => 'hello!'
@@ -60,7 +77,7 @@ Yii::$app->queue->getChannel('default')->push(
 #### Run queue worker daemon (console app):
 
 ```php
-\Yii::$app->queue->startDaemon();
+\Yii::$app->queue->start(true);
 ```        
 
 

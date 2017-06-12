@@ -1,33 +1,61 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Nikolay
- * Date: 29.06.2016
- * Time: 15:46
- */
-
-namespace yii\queue\components;
 
 
+namespace mirocow\queue\components;
+
+
+use mirocow\queue\exceptions\ChannelException;
+use mirocow\queue\interfaces\ChannelInterface;
+use mirocow\queue\models\MessageModel;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
-use yii\queue\exceptions\ChannelException;
-use yii\queue\interfaces\ChannelInterface;
-use yii\queue\models\MessageModel;
 
 /**
  * Class BaseQueueChannel
- * @package yii\queue
+ * @package mirocow\queue
  *
- * @property $driver \yii\queue\interfaces\DriverInterface
+ * @property $driver \mirocow\queue\interfaces\DriverInterface
  */
 class ChannelComponent extends Component implements ChannelInterface
 {
 
+    /**
+     * @event PushEvent
+     */
+    const EVENT_BEFORE_PUSH = 'beforePush';
+    /**
+     * @event PushEvent
+     */
+    const EVENT_AFTER_PUSH = 'afterPush';
+
+    /**
+     * @var
+     */
     public $driver;
-    public $queueName;
+
+    /**
+     * @var string
+     */
+    public $queueName = 'queue';
+
+    /**
+     * @var string
+     */
     public $channelName = "default";
 
+    /**
+     * @var int
+     */
+    public $pushDelay = 0;
+
+    /**
+     * @var null
+     */
+    public $pushPriority = NULL;
+
+    /**
+     * @throws InvalidConfigException
+     */
     public function init()
     {
         parent::init();
@@ -42,6 +70,10 @@ class ChannelComponent extends Component implements ChannelInterface
             throw new InvalidConfigException;
     }
 
+    /**
+     * @param null $queue
+     * @return string
+     */
     public function getQueueName($queue = null)
     {
         return ($queue ?: $this->queueName) . ':' . $this->channelName;
@@ -94,17 +126,33 @@ class ChannelComponent extends Component implements ChannelInterface
      * @return mixed
      * @throws ChannelException
      */
-    public function push(MessageModel $message, $delay = 0)
-    {
+    public function push(MessageModel $message, $delay = 0, $pushPriority = null) {
+        $event = new PushEvent(
+          [
+            'message' => $message,
+            'delay' => $delay,
+            'priority' => $pushPriority,
+          ]
+        );
+        $this->pushDelay    = 0;
+        $this->pushPriority = NULL;
+        $this->trigger(self::EVENT_BEFORE_PUSH, $event);
+
+        $return = false;
+
         if ($message instanceof MessageModel) {
             if ($message->validate()) {
-                return $this->driver->push($message->toJSON(), $this->getQueueName(), $delay);
+                $return = $this->driver->push($message->toJSON(), $this->getQueueName(), $delay, $pushPriority);
             } else {
                 throw new ChannelException("message is not valid MessageModel");
             }
         } else {
             throw new ChannelException("message is not instanceof MessageModel");
         }
+
+        $this->trigger(self::EVENT_AFTER_PUSH, $event);
+
+        return $return;
     }
 
     /**
@@ -149,5 +197,13 @@ class ChannelComponent extends Component implements ChannelInterface
     public function delete(array $message)
     {
         return $this->driver->delete($message);
+    }
+
+    /**
+     * @param $queueName
+     * @return mixed
+     */
+    public function status($id = FALSE){
+        return $this->driver->status($this->getQueueName(), $id);
     }
 }

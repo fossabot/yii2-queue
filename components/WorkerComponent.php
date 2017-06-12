@@ -1,25 +1,19 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Nikolay
- * Date: 29.06.2016
- * Time: 15:46
- */
 
-namespace yii\queue\components;
+namespace mirocow\queue\components;
 
 
 use yii\base\Component;
 use yii\base\Controller;
 use yii\base\InvalidConfigException;
-use yii\queue\exceptions\ChannelException;
-use yii\queue\exceptions\WorkerException;
-use yii\queue\interfaces\WorkerInterface;
-use yii\queue\models\MessageModel;
+use mirocow\queue\exceptions\ChannelException;
+use mirocow\queue\exceptions\WorkerException;
+use mirocow\queue\interfaces\WorkerInterface;
+use mirocow\queue\models\MessageModel;
 
 /**
  * Class WorkerComponent
- * @package yii\queue
+ * @package mirocow\queue
  *
  * @property $actionClass \yii\console\Controller
  * @property $_message MessageModel
@@ -33,16 +27,27 @@ class WorkerComponent extends Component implements WorkerInterface
     public static $isRun = false;
 
     private $_actionClass = null;
+
+    /**
+     * @var MessageModel null
+     */
     private $_message = null;
     private $_watcherId = null;
     private $_validClassMethods = [];
 
+    /**
+     *
+     */
     public function init()
     {
         parent::init();
         $this->setActionClass($this->constructActionClass($this->action));
     }
 
+    /**
+     * @param $action
+     * @return null
+     */
     private function constructActionClass($action)
     {
         $actionClass = null;
@@ -58,6 +63,10 @@ class WorkerComponent extends Component implements WorkerInterface
         return $actionClass;
     }
 
+    /**
+     * @param null $class
+     * @return bool
+     */
     public function setActionClass($class = null)
     {
         if (is_object($class)) {
@@ -68,21 +77,35 @@ class WorkerComponent extends Component implements WorkerInterface
         return false;
     }
 
+    /**
+     * @return null
+     */
     public function getActionClass()
     {
         return $this->_actionClass;
     }
 
+    /**
+     * @param null $watcherId
+     */
     public function setWatcherId($watcherId = null)
     {
         $this->_watcherId = $watcherId;
     }
 
+    /**
+     * @return null
+     */
     public function getWatcherId()
     {
         return $this->_watcherId;
     }
 
+    /**
+     * @param MessageModel $messageModel
+     * @return bool
+     * @throws WorkerException
+     */
     public function setMessage(MessageModel $messageModel)
     {
         $this->_message = $messageModel;
@@ -94,11 +117,19 @@ class WorkerComponent extends Component implements WorkerInterface
         return true;
     }
 
+    /**
+     * @return mixed
+     */
     public function getMessage()
     {
         return $this->_message;
     }
 
+    /**
+     * @param $class
+     * @param $method
+     * @return bool
+     */
     private function methodInClassValidate($class, $method)
     {
         $classHasMethod = false;
@@ -171,7 +202,10 @@ class WorkerComponent extends Component implements WorkerInterface
         $message = $this->getMessage();
 
         if ($this->methodInClassValidate($this::$actionClassName, $message->method)) {
-            return $this->argumentsValidate($this::$actionClassName, $message->method, $message->arguments) ? call_user_func_array(array($this::$actionClassName, $message->method), $message->arguments) : false;
+            if($this->argumentsValidate($this::$actionClassName, $message->method, $message->arguments)){
+               return call_user_func_array([$this::$actionClassName, $message->method], $message->arguments);
+            }
+            return false;
         } else {
             throw new WorkerException("Method `{$message->method}` not exist in class `{$this::$actionClassName}`");
         }

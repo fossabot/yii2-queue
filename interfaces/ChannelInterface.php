@@ -1,13 +1,7 @@
 <?php
 
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
-
-namespace yii\queue\interfaces;
-use yii\queue\models\MessageModel;
+namespace mirocow\queue\interfaces;
+use mirocow\queue\models\MessageModel;
 
 /**
  * Channel inteface
@@ -78,4 +72,9 @@ interface ChannelInterface
      * @param array $message
      */
     public function delete(array $message);
+
+    /**
+     * @return mixed
+     */
+    public function status();
 }

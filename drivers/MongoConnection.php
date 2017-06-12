@@ -1,40 +1,42 @@
 <?php
 
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
+namespace mirocow\queue\drivers;
 
-namespace yii\queue\drivers;
-
-use \yii\queue\interfaces\DriverInterface;
+use mirocow\queue\drivers\common\BaseConnection;
 
 /**
  * MongoConnection
  *
  * @author Anton Ermolovich <anton.ermolovich@gmail.com>
  */
-class MongoConnection extends \yii\base\Component implements DriverInterface
+class MongoConnection extends BaseConnection
 {
 	public function delete(array $message)
 	{
 		
 	}
 
-	public function pop($queue)
+	public function pop(string $queueName, $timeout = 0)
 	{
 		
 	}
 
-	public function purge($queue)
+	public function purge(string $queueName)
 	{
 		
 	}
 
-	public function push($payload, $queue, $delay = 0)
+    /**
+     * @param string $payload
+     * @param string $queueName
+     * @param int $delay
+     * @param null $priority
+     */
+	public function push($payload, string $queueName, $delay = 0, $priority = NULL)
 	{
-		
+        if ($priority !== null) {
+            throw new NotSupportedException('Job priority is not supported in the driver.');
+        }
 	}
 
 	public function release(array $message, $delay = 0)
@@ -42,5 +44,11 @@ class MongoConnection extends \yii\base\Component implements DriverInterface
 		
 	}
 
-//put your code here
+    /**
+     * @param string $queueName
+     */
+    public function status(string $queueName){
+
+    }
+
 }

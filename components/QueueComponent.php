@@ -1,37 +1,35 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Nikolay
- * Date: 29.06.2016
- * Time: 15:08
- */
 
-namespace yii\queue\components;
+namespace mirocow\queue\components;
 
+use mirocow\queue\exceptions\QueueException;
+use mirocow\queue\models\MessageModel;
 use yii\di\ServiceLocator;
-use yii\queue\exceptions\QueueException;
-use yii\queue\models\MessageModel;
 
 /**
  * Main component of Yii queue
  *
  * Class QueueComponent
- * @package yii\queue\components
+ * @package mirocow\queue\components
  * @property $regChannels ServiceLocator
  * @property $regWorkers ServiceLocator
  */
-class QueueComponent extends \yii\base\Component implements \yii\queue\interfaces\QueueInterface
+class QueueComponent extends \yii\base\Component implements \mirocow\queue\interfaces\QueueInterface
 {
     public $queueName = 'queue';
     public $channels = [];
     public $workers = [];
-    public $timeout = 1000;
+    public $timer_tick = 1000;
+    public $timer_keep_alive = false;
 
     protected $regWorkers = null;
     protected $regChannels = null;
 
     private $_pid = null;
 
+    /**
+     * @throws QueueException
+     */
     public function init()
     {
         parent::init();
@@ -92,21 +90,33 @@ class QueueComponent extends \yii\base\Component implements \yii\queue\interface
         }
     }
 
+    /**
+     * @return array
+     */
     public function getChannelNamesList()
     {
         return array_keys($this->channels);
     }
 
+    /**
+     * @return array
+     */
     public function getWorkerNamesList()
     {
         return array_keys($this->workers);
     }
 
+    /**
+     * @param $pid
+     */
     public function setPid($pid)
     {
         $this->_pid = $pid;
     }
 
+    /**
+     * @return null
+     */
     public function getPid()
     {
         return $this->_pid;
@@ -122,25 +132,29 @@ class QueueComponent extends \yii\base\Component implements \yii\queue\interface
         if ($worker = $this->getWorker($messageModel->worker)) {
             $worker->setMessage($messageModel);
             $worker->setWatcherId($watcherId);
-            $worker->run();
+            try {
+                $worker->run();
+            } catch (\Exception $e) {
+                throw $e;
+            }
         }
     }
 
     /**
      * @var $message MessageModel
      */
-    public function startDaemon()
+    public function start($daemon = true)
     {
+
         \Amp\run(function () {
 
             $this->setPid(getmypid());
 
             echo "Queue Daemon is started with PID: " . $this->getPid() . "\n\n";
 
-            \Amp\onSignal(SIGINT, function () {
-                \Amp\stop();
-                throw new QueueException("Queue daemon terminate. PID: {$this->getPid()}\n\n");
-            });
+            if(true !== $this->addSignals()) {
+                throw new \Exception('No signals!');
+            }
 
             foreach ($this->getChannelNamesList() as $channelName) {
                 $channel = $this->getChannel($channelName);
@@ -154,8 +168,38 @@ class QueueComponent extends \yii\base\Component implements \yii\queue\interface
                         return false;
                     }
 
-                }, $this->timeout);
+                }, $this->timer_tick,  $options = ['keep_alive' => $this->timer_keep_alive]);
             }
         });
+    }
+
+    /**
+     * @return bool
+     */
+    private function addSignals()
+    {
+        if (php_sapi_name() === "phpdbg") {
+            // phpdbg captures SIGINT so don't bother inside the debugger
+            return;
+        }
+
+        \Amp\onSignal(SIGINT, function () {
+            exit;
+        });
+        \Amp\onSignal(SIGTERM, function () {
+            exit;
+        });
+        \Amp\onSignal(SIGHUP, function () {
+            exit;
+        });
+
+        register_shutdown_function(function () {
+            if (\Amp\info()["state"] !== \Amp\Reactor::STOPPED) {
+                \Amp\stop();
+                throw new QueueException("Queue daemon terminate. PID: {$this->getPid()}\n\n");
+            }
+        });
+
+        return true;
     }
 }
