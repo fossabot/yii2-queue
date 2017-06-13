@@ -103,11 +103,11 @@ class RedisConnection extends BaseConnection
         }
         $id = $this->connection->incr($queueName.'.message_id');
         if (!$delay) {
-            $this->connection->hset($queueName.'.messages', $id, $payload);
             $this->connection->lpush($queueName.'.waiting', $id);
-        } else {
             $this->connection->hset($queueName.'.messages', $id, $payload);
+        } else {
             $this->connection->zadd($queueName.'.delayed', time() + $delay, $id);
+            $this->connection->hset($queueName.'.messages', $id, $payload);
         }
         return $id;
 	}
