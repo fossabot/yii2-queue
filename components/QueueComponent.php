@@ -196,13 +196,13 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         }
 
         \Amp\onSignal(SIGINT, function () {
-            exit;
+            \Amp\stop();
         });
         \Amp\onSignal(SIGTERM, function () {
-            exit;
+            \Amp\stop();
         });
         \Amp\onSignal(SIGHUP, function () {
-            exit;
+            \Amp\stop();
         });
 
         register_shutdown_function(function () {
