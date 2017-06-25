@@ -136,6 +136,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             try {
                 $worker->run();
             } catch (\Exception $e) {
+                \Yii::error($e, __METHOD__);
                 throw $e;
             }
         }
@@ -176,6 +177,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         }
                     } catch (\Exception $e){
                         if($e->getCode() == 0) {
+                            \Yii::error($e, __METHOD__);
                             return FALSE;
                         }
                     }
