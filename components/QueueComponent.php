@@ -64,7 +64,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      * @return ChannelComponent
      * @throws QueueException
      */
-    public function getChannel($name = '')
+    public function getChannel($name = 'default')
     {
         $name = empty($name) ? ($this->getChannelNamesList()[0] ?: '') : $name;
 

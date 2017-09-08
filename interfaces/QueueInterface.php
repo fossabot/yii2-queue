@@ -15,7 +15,7 @@ interface QueueInterface
 	 *
 	 * @param string $name
 	 */
-	public function getChannel($name);
+	public function getChannel($name = 'default');
 	
 	
 }
