@@ -51,7 +51,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
             $this->regWorkers = new ServiceLocator();
             foreach ($this->workers as $workerName => $worker) {
-                $channel['workerName'] = $workerName;
+                $worker['workerName'] = $workerName;
                 $this->regWorkers->set($workerName, $worker);
             }
 
