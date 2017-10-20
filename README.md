@@ -3,11 +3,11 @@ Yii 2.0 Queue Extension
 
 Non blocking queue manager for Yii 2.0
 
-#####Install:
+##### Install:
 
 `php composer.phar require mirocow/yii2-queue "dev-hakaton-tass"`
 
-#####Config:
+##### Config:
 
 ```php
 'components' => [
@@ -44,7 +44,7 @@ Before use apply migrations for using Mysql driver:
 ./yii migrate/up --migrationPath=@vendor/argayash/yii2-queue/migrations
 ```
 
-###Usage:
+### Usage:
 
 #### Worker class:
 
