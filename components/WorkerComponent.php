@@ -203,9 +203,9 @@ class WorkerComponent extends Component implements WorkerInterface
 
         if ($this->methodInClassValidate($this::$actionClassName, $message->method)) {
             if($this->argumentsValidate($this::$actionClassName, $message->method, $message->arguments)){
-               return call_user_func_array([$this::$actionClassName, $message->method], $message->arguments);
+                return call_user_func_array([$this::$actionClassName, $message->method], $message->arguments);
             }
-            return false;
+            throw new WorkerException("Send wrong variables to method `{$message->method}` in class `{$this::$actionClassName}`");
         } else {
             throw new WorkerException("Method `{$message->method}` not exist in class `{$this::$actionClassName}`");
         }

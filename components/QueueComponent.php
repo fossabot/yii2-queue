@@ -133,12 +133,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         if ($worker = $this->getWorker($messageModel->worker)) {
             $worker->setMessage($messageModel);
             $worker->setWatcherId($watcherId);
-            try {
-                $worker->run();
-            } catch (\Exception $e) {
-                \Yii::error($e, __METHOD__);
-                throw $e;
-            }
+            $worker->run();
         }
     }
 
@@ -167,19 +162,17 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
                 \Amp\repeat(function ($watcherId) use ($channel) {
 
-                    try {
-                        if ($message = $channel->pop()) {
+                    if ($message = $channel->pop()) {
+                        try {
                             $this->processMessage($message, $watcherId);
-                            return TRUE;
-                        }
-                        else {
-                            return FALSE;
-                        }
-                    } catch (\Exception $e){
-                        if($e->getCode() == 0) {
+                        } catch (\Exception $e) {
                             \Yii::error($e, __METHOD__);
-                            return FALSE;
+                            $channel->push($message);
+                            throw $e;
                         }
+                        return TRUE;
+                    } else {
+                        return FALSE;
                     }
 
                 }, $this->timer_tick,  $options = ['keep_alive' => $this->timer_keep_alive]);
@@ -210,7 +203,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         register_shutdown_function(function () {
             if (\Amp\info()["state"] !== \Amp\Reactor::STOPPED) {
                 \Amp\stop();
-                throw new QueueException("Queue daemon terminate. PID: {$this->getPid()}\n\n");
+                die("Queue daemon terminate. PID: {$this->getPid()}\n\n");
             }
         });
 
