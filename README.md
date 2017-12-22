@@ -10,7 +10,14 @@ Non blocking queue manager for Yii 2.0
 ##### Config:
 
 ```php
+'controllerMap' => [
+    'queue' => [
+        'class' => 'mirocow\queue\controllers\QueueController',
+    ],
+],
+
 'components' => [
+
     'queue' => [
         'class' => 'mirocow\queue\components\QueueComponent',
         'queueName' => 'default-queue',
