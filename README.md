@@ -83,8 +83,8 @@ Yii::$app->queue->getChannel('default')->push(
 
 #### Run queue worker daemon (console app):
 
-```php
-\Yii::$app->queue->start(true);
+```bash
+$ php ./yii queue/run --pid-file=/tmp/queue.pid
 ```        
 
 
