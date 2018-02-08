@@ -26,7 +26,7 @@ Non blocking queue manager for Yii 2.0
             'notification' => [
                 'class' => 'mirocow\queue\components\WorkerComponent',
                 'action' => [
-                    'class' => 'console\controllers\NotificationController',
+                    'class' => 'mirocow\queue\controllers\NotificationController',
                 ]
             ],
             ...
