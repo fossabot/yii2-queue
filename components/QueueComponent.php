@@ -140,7 +140,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     /**
      * @var $message MessageModel
      */
-    public function start($daemon = true)
+    public function start()
     {
 
         Loop::setErrorHandler(function (\Throwable $e) {
