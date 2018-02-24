@@ -21,7 +21,6 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     public $channels = [];
     public $workers = [];
     public $timer_tick = 1000;
-    public $timer_keep_alive = true;
     public $pidFile = '';
 
     protected $regWorkers = null;
@@ -162,12 +161,11 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             if (true !== $this->addSignals()) {
                 throw new \Exception('No signals!');
             }
-
+            
             foreach ($this->getChannelNamesList() as $channelName) {
+                /** @var ChannelComponent $channel */
                 $channel = $this->getChannel($channelName);
-
-                Loop::repeat($this->timer_tick, function ($watcherId) use ($channel) {
-
+                Loop::repeat($this->timer_tick, function ($watcherId, $channel) {
                     if ($message = $channel->pop()) {
                         try {
                             $this->processMessage($message, $watcherId);
@@ -182,8 +180,9 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         return FALSE;
                     }
 
-                }, ['keep_alive' => $this->timer_keep_alive]);
+                }, $channel);
             }
+
         });
     }
 
