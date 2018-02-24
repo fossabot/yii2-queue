@@ -5,6 +5,7 @@ namespace mirocow\queue\components;
 use mirocow\queue\exceptions\QueueException;
 use mirocow\queue\models\MessageModel;
 use yii\di\ServiceLocator;
+use Amp\Loop;
 
 /**
  * Main component of Yii queue
@@ -143,24 +144,29 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     public function start($daemon = true)
     {
 
-        \Amp\run(function () {
+        Loop::setErrorHandler(function (\Throwable $e) {
+            echo "error handler -> " . $e->getMessage() . PHP_EOL;
+            die("Queue daemon terminate. PID: {$this->getPid()}\n\n");
+        });
+
+        Loop::run(function () {
 
             $this->setPid(getmypid());
 
-            if($this->pidFile){
+            if ($this->pidFile) {
                 file_put_contents($this->pidFile, $this->getPid());
             }
 
             echo "Queue Daemon is started with PID: " . $this->getPid() . "\n\n";
 
-            if(true !== $this->addSignals()) {
+            if (true !== $this->addSignals()) {
                 throw new \Exception('No signals!');
             }
 
             foreach ($this->getChannelNamesList() as $channelName) {
                 $channel = $this->getChannel($channelName);
 
-                \Amp\repeat(function ($watcherId) use ($channel) {
+                Loop::repeat($this->timer_tick, function ($watcherId) use ($channel) {
 
                     if ($message = $channel->pop()) {
                         try {
@@ -168,14 +174,15 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         } catch (\Exception $e) {
                             \Yii::error($e, __METHOD__);
                             $channel->push($message);
-                            throw $e;
+                            Loop::stop();
+                            return FALSE;
                         }
                         return TRUE;
                     } else {
                         return FALSE;
                     }
 
-                }, $this->timer_tick,  $options = ['keep_alive' => $this->timer_keep_alive]);
+                }, ['keep_alive' => $this->timer_keep_alive]);
             }
         });
     }
@@ -190,21 +197,14 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             return;
         }
 
-        \Amp\onSignal(SIGINT, function () {
-            \Amp\stop();
+        Loop::onSignal(SIGINT, function () {
+            Loop::stop();
         });
-        \Amp\onSignal(SIGTERM, function () {
-            \Amp\stop();
+        Loop::onSignal(SIGTERM, function () {
+            Loop::stop();
         });
-        \Amp\onSignal(SIGHUP, function () {
-            \Amp\stop();
-        });
-
-        register_shutdown_function(function () {
-            if (\Amp\info()["state"] !== \Amp\Reactor::STOPPED) {
-                \Amp\stop();
-                die("Queue daemon terminate. PID: {$this->getPid()}\n\n");
-            }
+        Loop::onSignal(SIGHUP, function () {
+            Loop::stop();
         });
 
         return true;
