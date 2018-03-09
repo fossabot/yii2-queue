@@ -173,6 +173,9 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                             \Yii::error($e, __METHOD__);
                             $channel->push($message);
                             Loop::stop();
+                            if(YII_DEBUG){
+                                throw $e;
+                            };
                             return FALSE;
                         }
                         return TRUE;
