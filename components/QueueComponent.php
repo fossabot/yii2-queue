@@ -133,7 +133,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         if ($worker = $this->getWorker($messageModel->worker)) {
             $worker->setMessage($messageModel);
             $worker->setWatcherId($watcherId);
-            $worker->run();
+            return $worker->run();
         }
     }
 
@@ -168,21 +168,23 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 Loop::repeat($this->timer_tick, function ($watcherId, $channel) {
                     if ($message = $channel->pop()) {
                         try {
-                            $this->processMessage($message, $watcherId);
+                            if(!$this->processMessage($message, $watcherId)){
+                                $channel->push($message);
+                            }
                         } catch (\Exception $e) {
                             \Yii::error($e, __METHOD__);
                             $channel->push($message);
                             Loop::stop();
                             if(YII_DEBUG){
                                 throw $e;
-                            };
-                            return FALSE;
+                            } else {
+                                return FALSE;
+                            }
                         }
                         return TRUE;
                     } else {
                         return FALSE;
                     }
-
                 }, $channel);
             }
 

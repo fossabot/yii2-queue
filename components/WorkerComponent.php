@@ -148,6 +148,11 @@ class WorkerComponent extends Component implements WorkerInterface
         return $classHasMethod;
     }
 
+    private function isStatic($class, $method)
+    {
+        return $this->_validClassMethods[$class][$method]->isStatic();
+    }
+
     /**
      * @param $class
      * @param $method
@@ -200,14 +205,20 @@ class WorkerComponent extends Component implements WorkerInterface
     public function run()
     {
         $message = $this->getMessage();
+        $actionClassName = $this::$actionClassName;
 
-        if ($this->methodInClassValidate($this::$actionClassName, $message->method)) {
-            if($this->argumentsValidate($this::$actionClassName, $message->method, $message->arguments)){
-                return call_user_func_array([$this::$actionClassName, $message->method], $message->arguments);
+        if ($this->methodInClassValidate($actionClassName, $message->method)) {
+            if($this->argumentsValidate($actionClassName, $message->method, $message->arguments)){
+                if($this->isStatic($actionClassName, $message->method)) {
+                    return call_user_func_array([ $actionClassName, $message->method ], $message->arguments);
+                } else {
+                    $object = \Yii::createObject(['class' => $actionClassName]);
+                    return call_user_func_array([ $object, $message->method ], $message->arguments);
+                }
             }
-            throw new WorkerException("Send wrong variables to method `{$message->method}` in class `{$this::$actionClassName}`");
+            throw new WorkerException("Send wrong variables to method `{$message->method}` in class `{$actionClassName}`");
         } else {
-            throw new WorkerException("Method `{$message->method}` not exist in class `{$this::$actionClassName}`");
+            throw new WorkerException("Method `{$message->method}` not exist in class `{$actionClassName}`");
         }
     }
 
