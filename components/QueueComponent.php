@@ -168,9 +168,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 Loop::repeat($this->timer_tick, function ($watcherId, $channel) {
                     if ($message = $channel->pop()) {
                         try {
-                            if(!$this->processMessage($message, $watcherId)){
-                                $channel->push($message);
-                            }
+                            $this->processMessage($message, $watcherId);
                         } catch (\Exception $e) {
                             \Yii::error($e, __METHOD__);
                             $channel->push($message);
