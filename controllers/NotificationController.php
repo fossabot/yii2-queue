@@ -20,12 +20,5 @@ class NotificationController
         if(empty($methodName)){
             return false;
         }
-
-        try {
-            return true;
-        } catch (\Exception $e){
-            return false;
-        }
-
     }
 }
