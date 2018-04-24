@@ -244,7 +244,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 $this->_children = [];
                 break;
             } elseif ($signaled_pid) {
-                echo "Child {$signaled_pid} done\n";
+                self::log("Child {$signaled_pid} done\n");
                 unset($this->_children[$signaled_pid]);
             }
         }
