@@ -217,7 +217,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             try {
                 $this->log("Child process {$pid} are working...\n");
                 $this->processMessage($message, $watcherId);
-                $this->log("Child process finished\n");
+                $this->log("Child process {$pid} finished\n");
             } catch (\Exception $e) {
                 $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
                 $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
