@@ -7,6 +7,7 @@ use common\models\User;
 use common\models\essence\Chats;
 use common\models\essence\Message;
 use mirocow\notification\components\Notification;
+use mirocow\queue\components\QueueComponent;
 use yii\console\Controller;
 use yii\db\Expression;
 use yii\helpers\Url;
@@ -46,8 +47,9 @@ class QueueController extends Controller
      */
     public function actionRun()
     {
-        $queue = \Yii::$app->queue;
+        $queue = &\Yii::$app->queue;
         $queue->pidFile = $this->pid_file;
         $queue->start();
     }
+
 }

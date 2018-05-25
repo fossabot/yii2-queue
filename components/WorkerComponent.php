@@ -23,10 +23,10 @@ class WorkerComponent extends Component implements WorkerInterface
 
     public $action;
     public $workerName;
+    public $repeatIfRiseException = false;
+
     public static $actionClassName = '';
     public static $isRun = false;
-
-    private $_actionClass = null;
 
     /**
      * @var MessageModel null
@@ -34,6 +34,7 @@ class WorkerComponent extends Component implements WorkerInterface
     private $_message = null;
     private $_watcherId = null;
     private $_validClassMethods = [];
+    private $_actionClass = null;
 
     /**
      *

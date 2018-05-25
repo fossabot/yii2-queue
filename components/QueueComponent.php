@@ -17,12 +17,51 @@ use Amp\Loop;
  */
 class QueueComponent extends \yii\base\Component implements \mirocow\queue\interfaces\QueueInterface
 {
+
+    /**
+     * Version.
+     *
+     * @var string
+     */
+    const VERSION = '0.0.2';
+
+    const OS_TYPE_LINUX = 0;
+
+    const OS_TYPE_WIN = 1;
+
+    /**
+     * Daemonize.
+     *
+     * @var bool
+     */
+    public static $_daemonize = false;
+
+    /**
+     * OS.
+     *
+     * @var string
+     */
+    protected static $_OS = self::OS_TYPE_LINUX;
+
+    /**
+     * Standard output stream
+     * @var resource
+     */
+    protected static $_outputStream = null;
+
+    /**
+     * If $outputStream support decorated
+     * @var bool
+     */
+    protected static $_outputDecorated = null;
+
     public $queueName = 'queue';
     public $channels = [];
     public $workers = [];
     public $timer_tick = 10;
     public $pidFile = '';
     public $delayForIfRiseException = 300;
+    public $daemonize = true;
 
     protected $regWorkers = null;
     protected $regChannels = null;
@@ -38,6 +77,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     public function init()
     {
         parent::init();
+
+        self::$_daemonize = $this->daemonize;
 
         if (!empty($this->channels)) {
 
@@ -129,14 +170,35 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
     /**
      * @param MessageModel $messageModel
-     * @var $worker
+     * @var $watcherId
+     * @var integer $pid
      */
-    private function processMessage(MessageModel $messageModel, $watcherId = null)
+    private function processMessage(MessageModel $messageModel, $watcherId = null, $pid)
     {
+        /** @var WorkerComponent $worker */
         if ($worker = $this->getWorker($messageModel->worker)) {
-            $worker->setMessage($messageModel);
-            $worker->setWatcherId($watcherId);
-            $worker->run();
+            pcntl_signal_dispatch();
+            try {
+                $this->log("Child process {$pid} are working...\n");
+                $worker->setMessage($messageModel);
+                $worker->setWatcherId($watcherId);
+                $worker->run();
+                $this->log("Child process {$pid} finished\n");
+            } catch (\Exception $e) {
+                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
+                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
+                if($worker->repeatIfRiseException) {
+                    $channel->push($message, $this->delayForIfRiseException);
+                }
+                throw $e;
+            } catch (\Throwable $e) {
+                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
+                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
+                if($worker->repeatIfRiseException) {
+                    $channel->push($message, $this->delayForIfRiseException);
+                }
+                throw $e;
+            }
         }
     }
 
@@ -147,17 +209,19 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     {
         Loop::run(function () {
 
+            if (true !== $this->addSignals()) {
+                throw new \Exception('No signals!');
+            }
+
+            self::daemonize();
+            self::displayUI();
+
             $this->setPid(getmypid());
 
             if ($this->pidFile) {
                 file_put_contents($this->pidFile, $this->getPid());
             }
 
-            if (true !== $this->addSignals()) {
-                throw new \Exception('No signals!');
-            }
-
-            $this->log("Queue Daemon is started with PID: " . $this->getPid() . "\n\n");
             foreach ($this->getChannelNamesList() as $channelName) {
                 /** @var ChannelComponent $channel */
                 $channel = $this->getChannel($channelName);
@@ -212,23 +276,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             $pid = posix_getpid();
             $this->log("Child process starting with PID {$pid} ...\n");
             $this->isChild = true;
-            //$this->setSignalHandlers([$this, 'childSignalHandler']);
-            pcntl_signal_dispatch();
-            try {
-                $this->log("Child process {$pid} are working...\n");
-                $this->processMessage($message, $watcherId);
-                $this->log("Child process {$pid} finished\n");
-            } catch (\Exception $e) {
-                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
-                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
-                $channel->push($message, $this->delayForIfRiseException);
-                throw $e;
-            } catch (\Throwable $e) {
-                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
-                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
-                $channel->push($message, $this->delayForIfRiseException);
-                throw $e;
-            }
+            $this->setSignalHandlers([$this, 'childSignalHandler']);
+            $this->processMessage($message, $watcherId, $pid);
             exit(0);
         }
     }
@@ -273,7 +322,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      * Child singanal handler
      * @param $signo
      */
-    /*public function childSignalHandler($signo)
+    public function childSignalHandler($signo)
     {
         switch ($signo) {
             case SIGTERM:
@@ -284,7 +333,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             default:
                 $this->log("Signal {$signo} does not have handlers");
         }
-    }*/
+    }
 
     /**
      * Set pcntl signal handler
@@ -358,9 +407,120 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      */
     private function log($message)
     {
-        if(YII_DEBUG){
-            echo $message;
+        static::safeEcho($message);
+    }
+
+    /**
+     * Run as deamon mode.
+     *
+     * @throws Exception
+     */
+    protected static function daemonize()
+    {
+        if (!static::$_daemonize || static::$_OS !== self::OS_TYPE_LINUX) {
+            return;
         }
+        umask(0);
+        $pid = pcntl_fork();
+        if (-1 === $pid) {
+            throw new Exception('fork fail');
+        } elseif ($pid > 0) {
+            exit(0);
+        }
+        if (-1 === posix_setsid()) {
+            throw new Exception("setsid fail");
+        }
+        // Fork again avoid SVR4 system regain the control of terminal.
+        $pid = pcntl_fork();
+        if (-1 === $pid) {
+            throw new Exception("fork fail");
+        } elseif (0 !== $pid) {
+            exit(0);
+        }
+    }
+
+    /**
+     * Display staring UI.
+     *
+     * @return void
+     */
+    protected static function displayUI()
+    {
+        global $argv;
+        if (in_array('-q', $argv)) {
+            return;
+        }
+        if (static::$_OS !== self::OS_TYPE_LINUX) {
+            static::safeEcho("----------------------- YII2-QUEUE -----------------------------\r\n");
+            static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
+            static::safeEcho("------------------------ WORKERS -------------------------------\r\n");
+            static::safeEcho("worker               listen                              processes status\r\n");
+            return;
+        }
+        static::safeEcho("<n>-----------------------<w> YII2-QUEUE </w>-----------------------------</n>\r\n");
+        static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
+        static::safeEcho("----------------------------------------------------------------\n");
+        if (static::$_daemonize) {
+            $pid = getmypid();
+            static::safeEcho("Input \"kill -2 {$pid}\" to stop. Start success.\n\n");
+        } else {
+            static::safeEcho("Press Ctrl+C to stop. Start success.\n");
+        }
+    }
+
+    /**
+     * Safe Echo.
+     * @param $msg
+     * @param bool $decorated
+     * @return bool
+     */
+    protected static function safeEcho($msg, $decorated = false)
+    {
+        $stream = static::outputStream();
+        if (!$stream) {
+            return false;
+        }
+        if (!$decorated) {
+            $line = $white = $green = $end = '';
+            if (static::$_outputDecorated) {
+                $line = "\033[1A\n\033[K";
+                $white = "\033[47;30m";
+                $green = "\033[32;40m";
+                $end = "\033[0m";
+            }
+            $msg = str_replace(array('<n>', '<w>', '<g>'), array($line, $white, $green), $msg);
+            $msg = str_replace(array('</n>', '</w>', '</g>'), $end, $msg);
+        } elseif (!static::$_outputDecorated) {
+            return false;
+        }
+        fwrite($stream, $msg);
+        fflush($stream);
+        return true;
+    }
+
+    /**
+     * @param null $stream
+     * @return bool|resource
+     */
+    protected static function outputStream($stream = null)
+    {
+        if (!$stream) {
+            $stream = static::$_outputStream ? static::$_outputStream : STDOUT;
+        }
+        if (!$stream || !is_resource($stream) || 'stream' !== get_resource_type($stream)) {
+            return false;
+        }
+        $stat = fstat($stream);
+        if (($stat['mode'] & 0170000) === 0100000) {
+            // file
+            static::$_outputDecorated = false;
+        } else {
+            static::$_outputDecorated =
+                static::$_OS === self::OS_TYPE_LINUX &&
+                function_exists('posix_isatty') &&
+                posix_isatty($stream);
+        }
+        return static::$_outputStream = $stream;
     }
 
 }
