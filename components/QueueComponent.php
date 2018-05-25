@@ -453,19 +453,20 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         if (static::$_OS !== self::OS_TYPE_LINUX) {
             static::safeEcho("----------------------- YII2-QUEUE -----------------------------\r\n");
             static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
-            static::safeEcho("------------------------ WORKERS -------------------------------\r\n");
-            static::safeEcho("worker               listen                              processes status\r\n");
+            static::safeEcho("----------------------------------------------------------------\n");
             return;
         }
         static::safeEcho("<n>-----------------------<w> YII2-QUEUE </w>-----------------------------</n>\r\n");
         static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
         static::safeEcho("----------------------------------------------------------------\n");
+
         if (static::$_daemonize) {
             $pid = getmypid();
             static::safeEcho("Input \"kill -2 {$pid}\" to stop. Start success.\n\n");
         } else {
             static::safeEcho("Press Ctrl+C to stop. Start success.\n");
         }
+        
     }
 
     /**
