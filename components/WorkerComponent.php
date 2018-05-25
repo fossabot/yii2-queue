@@ -217,7 +217,13 @@ class WorkerComponent extends Component implements WorkerInterface
                 if($this->isStatic($actionClassName, $message->method)) {
                     return call_user_func_array([ $actionClassName, $message->method ], $message->arguments);
                 } else {
-                    $object = \Yii::createObject($this->action, [$this->id, $this]);
+                    $reflection = new \ReflectionClass($actionClassName);
+                    $constructor = $reflection->getConstructor();
+                    if($constructor){
+                        $object = \Yii::createObject($this->action, [$this->id, $this]);
+                    } else {
+                        $object = \Yii::createObject($this->action);
+                    }
                     return call_user_func_array([ $object, $message->method ], $message->arguments);
                 }
             }
