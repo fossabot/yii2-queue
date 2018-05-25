@@ -21,6 +21,7 @@ use mirocow\queue\models\MessageModel;
 class WorkerComponent extends Component implements WorkerInterface
 {
 
+    public $id;
     public $action;
     public $workerName;
     public $repeatIfRiseException = false;
@@ -41,6 +42,9 @@ class WorkerComponent extends Component implements WorkerInterface
      */
     public function init()
     {
+        if(!$this->id){
+            $this->id = 'id_' . time();
+        }
         parent::init();
         $this->setActionClass($this->constructActionClass($this->action));
     }
@@ -213,7 +217,7 @@ class WorkerComponent extends Component implements WorkerInterface
                 if($this->isStatic($actionClassName, $message->method)) {
                     return call_user_func_array([ $actionClassName, $message->method ], $message->arguments);
                 } else {
-                    $object = \Yii::createObject(['class' => $actionClassName]);
+                    $object = \Yii::createObject($this->action, [$this->id, $this]);
                     return call_user_func_array([ $object, $message->method ], $message->arguments);
                 }
             }
