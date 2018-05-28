@@ -235,6 +235,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         }
                     } catch (\Exception $e) {
                         \Yii::error($e, __METHOD__);
+                        $this->log("Rise exception \"".$e->getMessage()."\n");
                         if ($this->isChild) {
                             exit(0);
                         } else {
@@ -242,6 +243,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         }
                     } catch (\Throwable $e) {
                         \Yii::error($e, __METHOD__);
+                        $this->log("Rise exception \"".$e->getMessage()."\n");
                         if ($this->isChild) {
                             exit(0);
                         } else {
@@ -314,7 +316,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 Loop::stop();
                 break;
             default:
-                $this->log("Signal {$signo} does not have handlers");
+                $this->log("Signal {$signo} does not have handlers\n");
         }
     }
 
@@ -331,7 +333,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 $this->log("Child process catch signal {$signo}\n");
                 break;
             default:
-                $this->log("Signal {$signo} does not have handlers");
+                $this->log("Signal {$signo} does not have handlers\n");
         }
     }
 
@@ -407,7 +409,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      */
     private function log($message)
     {
-        static::safeEcho($message);
+        static::safeEcho($message, true);
     }
 
     /**
@@ -489,8 +491,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 $green = "\033[32;40m";
                 $end = "\033[0m";
             }
-            $msg = str_replace(array('<n>', '<w>', '<g>'), array($line, $white, $green), $msg);
-            $msg = str_replace(array('</n>', '</w>', '</g>'), $end, $msg);
+            $msg = str_replace(['<n>', '<w>', '<g>'], [$line, $white, $green], $msg);
+            $msg = str_replace(['</n>', '</w>', '</g>'], $end, $msg);
         } elseif (!static::$_outputDecorated) {
             return false;
         }

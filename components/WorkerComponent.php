@@ -2,7 +2,6 @@
 
 namespace mirocow\queue\components;
 
-
 use yii\base\Component;
 use yii\base\Controller;
 use yii\base\InvalidConfigException;
@@ -209,20 +208,28 @@ class WorkerComponent extends Component implements WorkerInterface
      */
     public function run()
     {
+        /** @var MessageModel $message */
         $message = $this->getMessage();
         $actionClassName = $this::$actionClassName;
 
         if ($this->methodInClassValidate($actionClassName, $message->method)) {
             if($this->argumentsValidate($actionClassName, $message->method, $message->arguments)){
                 if($this->isStatic($actionClassName, $message->method)) {
+                    if(!isset($message->arguments['worker'])){
+                        $message->arguments['worker'] = $this;
+                    }
                     return call_user_func_array([ $actionClassName, $message->method ], $message->arguments);
                 } else {
                     $reflection = new \ReflectionClass($actionClassName);
                     $constructor = $reflection->getConstructor();
                     if($constructor){
+                        // TODO 5: Check for a need to use the property "worker"
                         $object = \Yii::createObject($this->action, [$this->id, $this]);
                     } else {
                         $object = \Yii::createObject($this->action);
+                        if($reflection->hasProperty('worker')){
+                            $object->worker = $this;
+                        }
                     }
                     return call_user_func_array([ $object, $message->method ], $message->arguments);
                 }
