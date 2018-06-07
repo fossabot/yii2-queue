@@ -3,6 +3,17 @@ Yii 2.0 Queue Extension
 
 Non blocking queue manager for Yii 2.0
 
+```
+----------------------- YII2-QUEUE -----------------------------
+Yii2-queue version: 0.0.3          PHP version:7.0.27-0+deb9u1
+Process ID: 6930
+Channels: 1
+Workers: 4
+Default queue name: default-queue
+----------------------------------------------------------------
+Press Ctrl+C to stop. Start success.
+```
+
 ##### Install:
 
 `php composer.phar require mirocow/yii2-queue "dev-hakaton-tass"`
