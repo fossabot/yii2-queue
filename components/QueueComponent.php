@@ -23,7 +23,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      *
      * @var string
      */
-    const VERSION = '0.0.2';
+    const VERSION = '0.0.3';
 
     const OS_TYPE_LINUX = 0;
 
@@ -214,13 +214,14 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             }
 
             self::daemonize();
-            self::displayUI();
 
             $this->setPid(getmypid());
 
             if ($this->pidFile) {
                 file_put_contents($this->pidFile, $this->getPid());
             }
+
+            self::displayUI($this);
 
             foreach ($this->getChannelNamesList() as $channelName) {
                 /** @var ChannelComponent $channel */
@@ -444,26 +445,31 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     /**
      * Display staring UI.
      *
+     * @param $instance
      * @return void
      */
-    protected static function displayUI()
+    protected static function displayUI($instance)
     {
         global $argv;
         if (in_array('-q', $argv)) {
             return;
         }
-        if (static::$_OS !== self::OS_TYPE_LINUX) {
-            static::safeEcho("----------------------- YII2-QUEUE -----------------------------\r\n");
-            static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
-            static::safeEcho("----------------------------------------------------------------\n");
-            return;
-        }
-        static::safeEcho("<n>-----------------------<w> YII2-QUEUE </w>-----------------------------</n>\r\n");
-        static::safeEcho('Yii2-queue version:'. static::VERSION. "          PHP version:". PHP_VERSION. "\r\n");
+
+        $pid = getmypid();
+
+        static::safeEcho("----------------------- YII2-QUEUE -----------------------------\r\n");
+        static::safeEcho('Yii2-queue version: ' . static::VERSION . "          PHP version:" . PHP_VERSION . "\r\n");
+        static::safeEcho('Process ID: '. $pid . "\r\n");
+        static::safeEcho('Channels: '. count($instance->channels) . "\r\n");
+        static::safeEcho('Workers: '. count($instance->workers) . "\r\n");
+        static::safeEcho('Default queue name: ' . $instance->queueName . "\r\n");
         static::safeEcho("----------------------------------------------------------------\n");
 
+        if (static::$_OS !== self::OS_TYPE_LINUX) {
+            return;
+        }
+
         if (static::$_daemonize) {
-            $pid = getmypid();
             static::safeEcho("Input \"kill -2 {$pid}\" to stop. Start success.\n\n");
         } else {
             static::safeEcho("Press Ctrl+C to stop. Start success.\n");
