@@ -184,13 +184,6 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 $worker->setWatcherId($watcherId);
                 $worker->run();
                 $this->log("Child process {$pid} finished\n");
-            } catch (\Exception $e) {
-                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
-                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
-                if($worker->repeatIfRiseException) {
-                    $channel->push($message, $this->delayForIfRiseException);
-                }
-                throw $e;
             } catch (\Throwable $e) {
                 $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
                 $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
@@ -233,14 +226,6 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                             $this->child($message, $watcherId, $channel);
                             $this->setSignalHandlers([$this, 'mainSignalHandler']);
                             $this->waitChildren();
-                        }
-                    } catch (\Exception $e) {
-                        \Yii::error($e, __METHOD__);
-                        $this->log("Rise exception \"".$e->getMessage()."\n");
-                        if ($this->isChild) {
-                            exit(0);
-                        } else {
-                            Loop::stop();
                         }
                     } catch (\Throwable $e) {
                         \Yii::error($e, __METHOD__);
