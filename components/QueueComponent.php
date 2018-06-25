@@ -191,6 +191,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                     $channel->push($message, $this->delayForIfRiseException);
                 }
                 throw $e;
+            } finally {
+                unset($worker);
             }
         }
     }
@@ -235,6 +237,8 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                         } else {
                             Loop::stop();
                         }
+                    } finally {
+                        unset($channel);
                     }
                     // Notify the children of the completion of work
                     $this->sendSignal(SIGINT);
