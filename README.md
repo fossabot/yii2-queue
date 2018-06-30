@@ -1,7 +1,7 @@
 # yii2-queue
 Yii 2.0 Queue Extension
 
-Non blocking queue manager for Yii 2.0
+Non blocking queue manager for Yii 2.0. It supports queues based on DB, Redis
 
 ```
 ----------------------- YII2-QUEUE -----------------------------
