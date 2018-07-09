@@ -1,14 +1,10 @@
 <?php
 
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
 
 namespace mirocow\queue\drivers;
 
 use mirocow\queue\drivers\common\BaseConnection;
+use mirocow\queue\interfaces\DriverInterface;
 use yii\db\Connection;
 use yii\helpers\Json;
 use yii\mutex\Mutex;
@@ -16,9 +12,9 @@ use yii\mutex\Mutex;
 /**
  * MysqlConnection Driver
  *
- * @author Mitrofanov Nikolay <mitrofanovnk@gmail.com>
+ * @author Mirocow <mr.mirocow@gmail.com>
  */
-class MysqlConnection extends BaseConnection
+class MysqlConnection extends BaseConnection implements DriverInterface
 {
 
     /**
@@ -77,10 +73,9 @@ class MysqlConnection extends BaseConnection
 
     /**
      * @param string $queueName
-     * @param int $timeout
      * @return bool
      */
-    public function pop(string $queueName, $timeout = 0)
+    public function pop(string $queueName)
     {
         if (!$this->mutex->acquire(__CLASS__ . $queueName, $this->mutexTimeout)) {
             throw new Exception("Has not waited the lock.");
@@ -149,24 +144,25 @@ class MysqlConnection extends BaseConnection
     }
 
     /**
-     * @param array $message
+     * @param array $payload
      * @return bool
      */
-    public function delete(array $message)
+    public function delete(string $queueName, array $payload)
     {
-        if (!empty($message)) {
+        if (!empty($payload)) {
             return $this->connection->createCommand()->update($this->getTableName(), [
                 'status' => self::STATUS_DELETE
-            ], ['id' => $message['id']]);
+            ], ['id' => $payload['id']]);
         }
         return false;
     }
 
     /**
-     * @param array $message
+     * @param string $payload
+     * @param string $queueName
      * @param int $delay
      */
-    public function release(array $message, $delay = 0)
+    public function release(string $payload, string $queueName, $delay = 0)
     {
 
     }

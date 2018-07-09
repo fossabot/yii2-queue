@@ -3,15 +3,16 @@
 namespace mirocow\queue\drivers;
 
 use mirocow\queue\drivers\common\BaseConnection;
+use mirocow\queue\interfaces\DriverInterface;
 use yii\base\NotSupportedException;
 use \yii\redis\Connection;
 
 /**
  * RedisConnection
  *
- * @author Anton Ermolovich <anton.ermolovich@gmail.com>
+ * @author Mirocow <mr.mirocow@gmail.com>
  */
-class RedisConnection extends BaseConnection
+class RedisConnection extends BaseConnection implements DriverInterface
 {
 
     /** @var Connection null  */
@@ -113,7 +114,8 @@ class RedisConnection extends BaseConnection
 	}
 
     /**
-     * @param array $message
+     * @param string $payload
+     * @param string $queueName
      * @param int $delay
      */
 	public function release(string $payload, string $queueName, $delay = 0)

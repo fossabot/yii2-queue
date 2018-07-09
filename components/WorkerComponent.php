@@ -23,7 +23,6 @@ class WorkerComponent extends Component implements WorkerInterface
     public $id;
     public $action;
     public $workerName;
-    public $repeatIfRiseException = false;
 
     public static $actionClassName = '';
     public static $isRun = false;

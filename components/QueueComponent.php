@@ -2,10 +2,10 @@
 
 namespace mirocow\queue\components;
 
+use Amp\Loop;
 use mirocow\queue\exceptions\QueueException;
 use mirocow\queue\models\MessageModel;
 use yii\di\ServiceLocator;
-use Amp\Loop;
 
 /**
  * Main component of Yii queue
@@ -62,6 +62,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     public $pidFile = '';
     public $delayForIfRiseException = 300;
     public $daemonize = true;
+    public $multithreading = true;
 
     protected $regWorkers = null;
     protected $regChannels = null;
@@ -179,15 +180,15 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
         if ($worker = $this->getWorker($messageModel->worker)) {
             pcntl_signal_dispatch();
             try {
-                $this->log("Child process {$pid} are working...\n");
+                $this->log("Process {$pid} are working...\n");
                 $worker->setMessage($messageModel);
                 $worker->setWatcherId($watcherId);
                 $worker->run();
-                $this->log("Child process {$pid} finished\n");
+                $this->log("Process {$pid} finished\n");
             } catch (\Throwable $e) {
-                $this->log("Rise exception \"".$e->getMessage()."\" in child {$pid} process\n");
-                $this->log("File " . $e->getFile() . " (" . $e->getLine(). ")\n");
-                if($worker->repeatIfRiseException) {
+                $this->log("Rise exception \"" . $e->getMessage() . "\" in child {$pid} process\n");
+                $this->log("File " . $e->getFile() . " (" . $e->getLine() . ")\n");
+                if ($worker->repeatIfRiseException) {
                     $channel->push($message, $this->delayForIfRiseException);
                 }
                 throw $e;
@@ -195,58 +196,6 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 unset($worker);
             }
         }
-    }
-
-    /**
-     * Start daemon
-     */
-    public function start()
-    {
-        Loop::run(function () {
-
-            if (true !== $this->addSignals()) {
-                throw new \Exception('No signals!');
-            }
-
-            self::daemonize();
-
-            $this->setPid(getmypid());
-
-            if ($this->pidFile) {
-                file_put_contents($this->pidFile, $this->getPid());
-            }
-
-            self::displayUI($this);
-
-            foreach ($this->getChannelNamesList() as $channelName) {
-                /** @var ChannelComponent $channel */
-                $channel = $this->getChannel($channelName);
-                Loop::repeat($this->timer_tick, function ($watcherId, $channel) {
-                    pcntl_signal_dispatch();
-                    try {
-                        if ($message = $channel->pop()) {
-                            $this->child($message, $watcherId, $channel);
-                            $this->setSignalHandlers([$this, 'mainSignalHandler']);
-                            $this->waitChildren();
-                        }
-                    } catch (\Throwable $e) {
-                        \Yii::error($e, __METHOD__);
-                        $this->log("Rise exception \"".$e->getMessage()."\n");
-                        if ($this->isChild) {
-                            exit(0);
-                        } else {
-                            Loop::stop();
-                        }
-                    } finally {
-                        unset($channel);
-                    }
-                    // Notify the children of the completion of work
-                    $this->sendSignal(SIGINT);
-                    // Set all signals
-                    pcntl_signal_dispatch();
-                }, $channel);
-            }
-        });
     }
 
     /**
@@ -259,18 +208,31 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      */
     protected function child($message = [], $watcherId, ChannelComponent $channel)
     {
-        $pid = pcntl_fork();
+        if ($this->multithreading) {
+            $pid = pcntl_fork();
+        } else {
+            $pid = null;
+        }
+
         if ($pid == -1) {
             throw new \Exception("Can`t fork process");
         } else if ($pid) {
             $this->_children[] = $pid;
         } else {
             $pid = posix_getpid();
-            $this->log("Child process starting with PID {$pid} ...\n");
-            $this->isChild = true;
+
+            if ($this->multithreading) {
+                $this->log("Child process starting with PID {$pid} ...\n");
+                $this->isChild = true;
+            } else {
+                $this->log("Worker process starting with PID {$pid} ...\n");
+            }
+
             $this->setSignalHandlers([$this, 'childSignalHandler']);
             $this->processMessage($message, $watcherId, $pid);
-            exit(0);
+            if ($this->isChild) {
+                exit(0);
+            }
         }
     }
 
@@ -326,6 +288,74 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
                 $this->log("Signal {$signo} does not have handlers\n");
         }
     }
+
+    /**
+     * Start daemon
+     */
+    public function start()
+    {
+        Loop::run(function () {
+
+            if (true !== $this->addSignals()) {
+                throw new \Exception('No signals!');
+            }
+
+            self::daemonize();
+
+            $this->setPid(getmypid());
+
+            if ($this->pidFile) {
+                file_put_contents($this->pidFile, $this->getPid());
+            }
+
+            self::displayUI($this);
+
+            Loop::repeat($this->timer_tick, function ($watcherId) {
+                if($this->run($watcherId)){
+                    Loop::stop();
+                }
+            });
+
+        });
+    }
+
+    /**
+     * Run queue
+     * @throws QueueException
+     */
+    public function run($watcherId = null)
+    {
+        foreach ($this->getChannelNamesList() as $channelName) {
+            /** @var ChannelComponent $channel */
+            $channel = $this->getChannel($channelName);
+
+            pcntl_signal_dispatch();
+            try {
+                if ($message = $channel->pop()) {
+                    $this->child($message, $watcherId, $channel);
+                    $this->setSignalHandlers([$this, 'mainSignalHandler']);
+                    if($this->multithreading) {
+                        $this->waitChildren();
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Yii::error($e, __METHOD__);
+                $this->log("Rise exception \"" . $e->getMessage() . "\n");
+                if ($this->isChild) {
+                    exit(0);
+                } else {
+                    return true;
+                }
+            } finally {
+                unset($channel);
+            }
+            // Notify the children of the completion of work
+            $this->sendSignal(SIGINT);
+            // Set all signals
+            pcntl_signal_dispatch();
+        }
+    }
+
 
     /**
      * Set pcntl signal handler

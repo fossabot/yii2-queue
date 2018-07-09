@@ -2,13 +2,11 @@
 
 namespace mirocow\queue\drivers\common;
 
-use mirocow\queue\interfaces\DriverInterface;
-
 /**
  * Class BaseConnection
  * @package mirocow\queue\drivers\common
  */
-abstract class BaseConnection extends \yii\base\Component implements DriverInterface
+abstract class BaseConnection extends \yii\base\Component
 {
     const STATUS_NEW = 0;
     const STATUS_DONE = 1;
