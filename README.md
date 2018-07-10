@@ -108,5 +108,39 @@ $ php ./yii queue/run --pid-file=/tmp/queue.pid
 
 ```bash
 $ ./vendor/bin/codecept -c vendor/mirocow/yii2-queue run unit
+
+XDebug could not open the remote debug file '/var/log/php7-fpm/php-fpm-xdebug-remote'.
+Codeception PHP Testing Framework v2.4.3
+Powered by PHPUnit 6.5.9 by Sebastian Bergmann and contributors.
+
+Unit Tests (6) ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- ActionsTest: Run job as class methodWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ ActionsTest: Run job as class method (0.15s)
+- ActionsTest: Run job class static methodWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ ActionsTest: Run job class static method (0.04s)
+- ActionsTest: Run job as action of controllerWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ ActionsTest: Run job as action of controller (0.05s)
+- ActionsTest: Run job as static methodWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ ActionsTest: Run job as static method (0.04s)
+- FileTest: Job as class methodWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ FileTest: Job as class method (0.03s)
+- RedisTest: Job as classWorker process starting with PID 23383 ...
+Process 23383 are working...
+Process 23383 finished
+✔ RedisTest: Job as class (0.03s)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Time: 1.34 seconds, Memory: 16.00MB
 ```
 
