@@ -75,7 +75,6 @@ class ActionsTest extends \Codeception\Test\Unit
         $this->getQueue()->run('default');
         $this->assertFileExists(Yii::getAlias('@runtime/job-1.lock'));
         unlink(Yii::getAlias('@runtime/job-1.lock'));
-        //unset($this->_queue);
     }
 
     public function testRunJobClassStaticMethod()
@@ -88,9 +87,8 @@ class ActionsTest extends \Codeception\Test\Unit
             ]
         ]));
         $this->getQueue()->run('default');
-        $this->assertFileExists(Yii::getAlias('@runtime/job-1.lock'));
-        unlink(Yii::getAlias('@runtime/job-1.lock'));
-        //unset($this->_queue);
+        $this->assertFileExists(Yii::getAlias('@runtime/job-2.lock'));
+        unlink(Yii::getAlias('@runtime/job-2.lock'));
     }
 
     /**
@@ -109,7 +107,6 @@ class ActionsTest extends \Codeception\Test\Unit
         $this->getQueue()->run('default');
         $this->assertFileExists(Yii::getAlias('@runtime/job-1.lock'));
         unlink(Yii::getAlias('@runtime/job-1.lock'));
-        //unset($this->_queue);
     }
 
     /**
@@ -126,9 +123,8 @@ class ActionsTest extends \Codeception\Test\Unit
             ]
         ]));
         $this->getQueue()->run('default');
-        $this->assertFileExists(Yii::getAlias('@runtime/job-1.lock'));
-        unlink(Yii::getAlias('@runtime/job-1.lock'));
-        //unset($this->_queue);
+        $this->assertFileExists(Yii::getAlias('@runtime/job-2.lock'));
+        unlink(Yii::getAlias('@runtime/job-2.lock'));
     }
 
 }

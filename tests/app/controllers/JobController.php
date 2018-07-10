@@ -17,7 +17,7 @@ class JobController extends Controller
     }
 
     public static function sayHelloStatic($say){
-        $fileName= Yii::getAlias('@runtime/job-1.lock');
+        $fileName= Yii::getAlias('@runtime/job-2.lock');
         file_put_contents($fileName, $say);
     }
 
