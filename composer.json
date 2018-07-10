@@ -1,6 +1,6 @@
 {
     "name": "mirocow/yii2-queue",
-    "description": "The queue extension for the Yii framework",
+    "description": "Yii 2.0 Non blocking queue extension.",
     "keywords": [
         "yii2",
         "queue"
