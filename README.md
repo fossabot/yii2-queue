@@ -1,6 +1,6 @@
 # Non blocking queue manager for Yii 2.0. It supports queues based on DB, Redis
 
-[![Latest Stable Version](https://poser.pugx.org/mirocow/yii2-queue/v/stable)](https://packagist.org/packages/mirocow/yii2-eav) [![Latest Unstable Version](https://poser.pugx.org/mirocow/yii2-queue/v/unstable)](https://packagist.org/packages/mirocow/yii2-queue) [![Total Downloads](https://poser.pugx.org/mirocow/yii2-queue/downloads)](https://packagist.org/packages/mirocow/yii2-queue) [![License](https://poser.pugx.org/mirocow/yii2-queue/license)](https://packagist.org/packages/mirocow/yii2-queue)
+[![Latest Stable Version](https://poser.pugx.org/mirocow/yii2-queue/v/stable)](https://packagist.org/packages/mirocow/yii2-queue) [![Latest Unstable Version](https://poser.pugx.org/mirocow/yii2-queue/v/unstable)](https://packagist.org/packages/mirocow/yii2-queue) [![Total Downloads](https://poser.pugx.org/mirocow/yii2-queue/downloads)](https://packagist.org/packages/mirocow/yii2-queue) [![License](https://poser.pugx.org/mirocow/yii2-queue/license)](https://packagist.org/packages/mirocow/yii2-queue)
 [![Join the chat at https://gitter.im/Mirocow/yii2-queue](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mirocow/yii2-queue?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ```
