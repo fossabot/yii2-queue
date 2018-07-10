@@ -42,14 +42,14 @@ $config = [
             'class' => \yii\redis\Connection::class,
             'hostname' => getenv('REDIS_HOST') ?: 'localhost',
             'port' => getenv('REDIS_PORT') ?: 6379,
-            'database' => getenv('REDIS_DB') ?: 1,
+            'database' => getenv('REDIS_DB') ?: 10,
         ],
         'queue' => [
             'class' => 'mirocow\queue\components\QueueComponent',
             'queueName' => 'default-queue',
-            'timeout' => 50, // optional
+            'multithreading' => false,
             'workers' => [
-                'worker1' => [
+                'worker' => [
                     'class' => 'mirocow\queue\components\WorkerComponent',
                     'action' => [
                         'class' => 'app\jobs\Job1',
@@ -68,7 +68,14 @@ $config = [
                     'class' => 'mirocow\queue\components\ChannelComponent',
                     'driver' => [
                         'class' => 'mirocow\queue\drivers\RedisConnection',
-                        'connection' => 'redis'
+                        'connection' => 'redis',
+                        'timeout' => 50,
+                    ]
+                ],
+                'channel_with_driver_file' => [
+                    'class' => 'mirocow\queue\components\ChannelComponent',
+                    'driver' => [
+                        'class' => 'mirocow\queue\drivers\FileConnection',
                     ]
                 ]
             ],

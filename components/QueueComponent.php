@@ -30,11 +30,56 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
     const OS_TYPE_WIN = 1;
 
     /**
+     * @var string
+     */
+    public $queueName = 'queue';
+
+    /**
+     * @var array
+     */
+    public $channels = [];
+
+    /**
+     * @var array
+     */
+    public $workers = [];
+
+    /**
+     * @var int
+     */
+    public $timer_tick = 10;
+
+    /**
+     * @var string
+     */
+    public $pidFile = '';
+
+    /**
+     * @var int
+     */
+    public $delayForIfRiseException = 300;
+
+    /**
+     * @var bool
+     */
+    public $daemonize = true;
+
+    /**
+     * @var bool
+     */
+    public $multithreading = true;
+
+    /**
+     * @var bool
+     */
+    public $repeatIfRiseException = false;
+
+    /**
      * Daemonize.
      *
      * @var bool
      */
-    public static $_daemonize = false;
+    protected static $_daemonize = false;
 
     /**
      * OS.
@@ -55,21 +100,34 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
      */
     protected static $_outputDecorated = null;
 
-    public $queueName = 'queue';
-    public $channels = [];
-    public $workers = [];
-    public $timer_tick = 10;
-    public $pidFile = '';
-    public $delayForIfRiseException = 300;
-    public $daemonize = true;
-    public $multithreading = true;
-
+    /**
+     * @var null
+     */
     protected $regWorkers = null;
+
+    /**
+     * @var null
+     */
     protected $regChannels = null;
 
+    /**
+     * @var null
+     */
     private $_pid = null;
+
+    /**
+     * @var array
+     */
     private $_children = [];
+
+    /**
+     * @var bool
+     */
     private $isChild = false;
+
+    /**
+     * @var bool
+     */
     private $_active = true;
 
     /**
@@ -188,7 +246,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             } catch (\Throwable $e) {
                 $this->log("Rise exception \"" . $e->getMessage() . "\" in child {$pid} process\n");
                 $this->log("File " . $e->getFile() . " (" . $e->getLine() . ")\n");
-                if ($worker->repeatIfRiseException) {
+                if ($this->repeatIfRiseException) {
                     $channel->push($message, $this->delayForIfRiseException);
                 }
                 throw $e;
@@ -311,7 +369,7 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
             self::displayUI($this);
 
             Loop::repeat($this->timer_tick, function ($watcherId) {
-                if($this->run($watcherId)){
+                if($this->run(null, $watcherId)){
                     Loop::stop();
                 }
             });
@@ -321,11 +379,18 @@ class QueueComponent extends \yii\base\Component implements \mirocow\queue\inter
 
     /**
      * Run queue
+     * @param string|null $channelName
      * @throws QueueException
      */
-    public function run($watcherId = null)
+    public function run($channelName = null, $watcherId = null)
     {
-        foreach ($this->getChannelNamesList() as $channelName) {
+        if (!$channelName) {
+            $channels = $this->getChannelNamesList();
+        } else {
+            $channels = [$channelName];
+        }
+
+        foreach ($channels as $channelName) {
             /** @var ChannelComponent $channel */
             $channel = $this->getChannel($channelName);
 

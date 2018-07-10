@@ -139,9 +139,7 @@ class WorkerComponent extends Component implements WorkerInterface
 
         if (isset($this->_validClassMethods[$class]) && isset($this->_validClassMethods[$class][$method])) {
             $classHasMethod = true;
-        } elseif (method_exists($class, $method)
-            && is_callable([$class, $method])
-        ) {
+        } elseif (method_exists($class, $method) && is_callable([$class, $method])) {
             $this->_validClassMethods[$class] = [];
             $this->_validClassMethods[$class][$method] = new \ReflectionMethod($class, $method);;
 

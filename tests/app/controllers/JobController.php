@@ -1,24 +1,24 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mirocow
- * Date: 08.07.2018
- * Time: 3:44
- */
 
-namespace app\jobs;
+namespace app\controllers;
 
+use yii\console\Controller;
 use Yii;
 
-class Job1
+/**
+ * JobController.
+ */
+class JobController extends Controller
 {
-    public function sayHello($say){
+    public function actionSayHello($say)
+    {
         $fileName = Yii::getAlias('@runtime/job-1.lock');
         file_put_contents($fileName, $say);
     }
 
     public static function sayHelloStatic($say){
-        $fileName = Yii::getAlias('@runtime/job-1.lock');
+        $fileName= Yii::getAlias('@runtime/job-1.lock');
         file_put_contents($fileName, $say);
     }
+
 }

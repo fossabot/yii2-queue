@@ -39,7 +39,6 @@ Run worker [web] with action [ProductCreate] from common\models\essence\Product
     'queue' => [
         'class' => 'mirocow\queue\components\QueueComponent',
         'queueName' => 'default-queue',
-        'timeout' => 50, // optional
         'workers' => [
             'notification' => [
                 'class' => 'mirocow\queue\components\WorkerComponent',
@@ -54,7 +53,7 @@ Run worker [web] with action [ProductCreate] from common\models\essence\Product
                 'class' => 'mirocow\queue\components\ChannelComponent',
                     'driver' => [
                         'class' => 'mirocow\queue\drivers\MysqlConnection',
-                        'connection' => 'db'
+                        'connection' => 'db',
                     ]
                 ]
             ],
@@ -105,4 +104,9 @@ Yii::$app->queue->getChannel('default')->push(
 $ php ./yii queue/run --pid-file=/tmp/queue.pid
 ```        
 
+##### Test:
+
+```bash
+$ ./vendor/bin/codecept -c vendor/mirocow/yii2-queue run unit
+```
 
