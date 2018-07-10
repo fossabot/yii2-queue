@@ -65,7 +65,7 @@ Run worker [web] with action [ProductCreate] from common\models\essence\Product
 
 Before use apply migrations for using Mysql driver:
 ```php
-./yii migrate/up --migrationPath=@vendor/argayash/yii2-queue/migrations
+./yii migrate/up --migrationPath=@vendor/mirocow/yii2-queue/migrations
 ```
 
 ### Usage:
