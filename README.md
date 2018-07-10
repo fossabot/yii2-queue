@@ -23,7 +23,7 @@ Run worker [web] with action [ProductCreate] from common\models\essence\Product
 
 ##### Install:
 
-`php composer.phar require mirocow/yii2-queue "dev-hakaton-tass"`
+`php composer.phar require mirocow/yii2-queue "^1.0.0"`
 
 ##### Config:
 
