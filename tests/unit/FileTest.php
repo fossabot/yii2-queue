@@ -56,13 +56,13 @@ class FileTest extends \Codeception\Test\Unit
 
     public function testPush1()
     {
-        /*$this->getQueue()->getChannel()->push(new MessageModel([
+        $this->getQueue()->getChannel()->push(new MessageModel([
             'worker' => 'worker1',
             'method' => 'sayHello',
             'arguments' => [
                 'say' => 'hello!'
             ]
-        ]));*/
+        ]));
         $this->getQueue()->run();
         $this->assertFileExists(Yii::getAlias('@runtime/job-1.lock'));
     }

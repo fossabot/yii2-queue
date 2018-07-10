@@ -69,9 +69,9 @@ interface ChannelInterface
     /**
      * Delete the message.
      *
-     * @param array $message
+     * @param integer $id
      */
-    public function delete(array $message);
+    public function delete(int $id = null);
 
     /**
      * @return mixed

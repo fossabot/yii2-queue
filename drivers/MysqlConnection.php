@@ -73,6 +73,22 @@ class MysqlConnection extends BaseConnection implements DriverInterface
 
     /**
      * @param string $queueName
+     * @param integer $id
+     * @return bool
+     */
+    public function delete(string $queueName, int $id = null)
+    {
+        if (!empty($payload)) {
+            return $this->connection->createCommand()->update($this->getTableName(),
+                ['status' => self::STATUS_DELETE],
+                ['id' => $payload['id']]
+            );
+        }
+        return false;
+    }
+
+    /**
+     * @param string $queueName
      * @return bool
      */
     public function pop(string $queueName)
@@ -94,19 +110,18 @@ class MysqlConnection extends BaseConnection implements DriverInterface
                 ->update(
                     $this->tableName,
                     ['status' => self::STATUS_DONE],
-                    [
-                        'id' => $message['id']
-                    ]
+                    ['id' => $message['id']]
                 )->execute() !== 1
         ) {
             $transaction->rollBack();
             return false;
         };
+
         $transaction->commit();
 
         $this->mutex->release(__CLASS__ . $queueName);
 
-        return $message['message'];
+        return [$message['id'], $message['message']];
     }
 
     /**
@@ -141,20 +156,6 @@ class MysqlConnection extends BaseConnection implements DriverInterface
         return $this->connection->createCommand()->update($this->getTableName(), [
             'status' => self::STATUS_DELETE
         ], ['queue' => $queueName]);
-    }
-
-    /**
-     * @param array $payload
-     * @return bool
-     */
-    public function delete(string $queueName, array $payload)
-    {
-        if (!empty($payload)) {
-            return $this->connection->createCommand()->update($this->getTableName(), [
-                'status' => self::STATUS_DELETE
-            ], ['id' => $payload['id']]);
-        }
-        return false;
     }
 
     /**

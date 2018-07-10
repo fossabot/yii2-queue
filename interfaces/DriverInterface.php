@@ -47,10 +47,10 @@ interface DriverInterface
     /**
      * Delete the message.
      * @param string $queueName
-     * @param string|array $payload
+     * @param integer $payload
      * @return mixed
      */
-    public function delete(string $queueName, $payload);
+    public function delete(string $queueName, int $id = null);
 
     /**
      * @param string $queueName

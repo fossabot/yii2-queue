@@ -163,9 +163,10 @@ class ChannelComponent extends Component implements ChannelInterface
     public function pop()
     {
         $message = null;
-        if ($rawMessage = $this->driver->pop($this->getQueueName())) {
-            if(is_string($rawMessage)){
+        if (list($id, $rawMessage) = $this->driver->pop($this->getQueueName())) {
+            if(is_numeric($id)){
                 $message = MessageModel::loadRawMessage($rawMessage);
+                $this->driver->delete($this->getQueueName(), $id);
             }
         }
         return $message;
@@ -194,18 +195,18 @@ class ChannelComponent extends Component implements ChannelInterface
     /**
      * Delete the message.
      *
-     * @param array $message
+     * @param integer $id
      */
-    public function delete(array $message)
+    public function delete(int $id = null)
     {
-        return $this->driver->delete($message);
+        return $this->driver->delete($this->getQueueName(), $id);
     }
 
     /**
      * @param $queueName
      * @return mixed
      */
-    public function status($id = FALSE){
+    public function status($id = null){
         return $this->driver->status($this->getQueueName(), $id);
     }
 }

@@ -34,11 +34,13 @@ class RedisConnection extends BaseConnection implements DriverInterface
     }
 
     /**
-     * @param array $message
+     * @param string $queueName
+     * @param integer $id
+     * @return bool
      */
-	public function delete(string $queueName, string $payload)
+    public function delete(string $queueName, int $id = null)
 	{
-        $this->connection->zrem($queueName . '.messages', $payload);
+        return $this->connection->hdel("{$queueName}.messages", $id);
 	}
 
     /**
@@ -64,18 +66,14 @@ class RedisConnection extends BaseConnection implements DriverInterface
         if (!$this->timeout) {
             if ($id = $this->connection->rpop($queueName.'.waiting')) {
                 if(is_numeric($id)) {
-                    $message = $this->connection->hget($queueName . '.messages', $id);
-                    $this->connection->hdel("{$queueName}.messages", $id);
-                    return $message;
+                    return [$id, $this->connection->hget($queueName . '.messages', $id)];
                 }
             }
         } else {
             if ($result = $this->connection->brpop("{$queueName}.waiting", $this->timeout)) {
                 if(count($result) == 2 && is_numeric($result[1])) {
                     $id = $result[1];
-                    $message = $this->connection->hget("{$queueName}.messages", $id);
-                    $this->connection->hdel("{$queueName}.messages", $id);
-                    return $message;
+                    return [$id, $this->connection->hget("{$queueName}.messages", $id)];
                 }
             }
         }

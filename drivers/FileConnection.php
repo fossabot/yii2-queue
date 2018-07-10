@@ -60,7 +60,7 @@ class FileConnection extends BaseConnection implements DriverInterface
 
         $ttr = 0;
 
-        $this->touchIndex($queueName, function (&$data) use ($payload, $ttr, $delay, &$id) {
+        $this->touchIndex($queueName, function (&$data) use ($queueName, $payload, $ttr, $delay, &$id) {
             if (!isset($data['lastId'])) {
                 $data['lastId'] = 0;
             }
@@ -98,6 +98,50 @@ class FileConnection extends BaseConnection implements DriverInterface
     }
 
     /**
+     * Delete the message.
+     * @param string $queueName
+     * @param integer $payload
+     * @return mixed
+     */
+    public function delete(string $queueName, int $id = null)
+    {
+        $removed = false;
+        $this->touchIndex($queueName, function (&$data) use ($queueName, $id, &$removed) {
+            if (!empty($data['waiting'])) {
+                foreach ($data['waiting'] as $key => $_payload) {
+                    if ($_payload[0] === $id) {
+                        unset($data['waiting'][$key]);
+                        $removed = true;
+                        break;
+                    }
+                }
+            }
+            if (!$removed && !empty($data['delayed'])) {
+                foreach ($data['delayed'] as $key => $_payload) {
+                    if ($_payload[0] === $id) {
+                        unset($data['delayed'][$key]);
+                        $removed = true;
+                        break;
+                    }
+                }
+            }
+            if (!$removed && !empty($data['reserved'])) {
+                foreach ($data['reserved'] as $key => $_payload) {
+                    if ($_payload[0] === $id) {
+                        unset($data['reserved'][$key]);
+                        $removed = true;
+                        break;
+                    }
+                }
+            }
+            if ($removed) {
+                unlink("{$this->path}/job__{$queueName}__{$id}.data");
+            }
+        });
+        return $removed;
+    }
+
+    /**
      * Pops message from the storage.
      *
      * @param string $queueName
@@ -109,7 +153,7 @@ class FileConnection extends BaseConnection implements DriverInterface
         $ttr = null;
         $attempt = null;
 
-        $this->touchIndex($queueName, function (&$data) use (&$id, &$ttr, &$attempt) {
+        $this->touchIndex($queueName, function (&$data) use ($queueName, &$id, &$ttr, &$attempt) {
             if (!empty($data['reserved'])) {
                 foreach ($data['reserved'] as $key => $payload) {
                     if ($payload[1] + $payload[3] < time()) {
@@ -132,9 +176,7 @@ class FileConnection extends BaseConnection implements DriverInterface
         });
 
         if ($id) {
-            $content = file_get_contents("{$this->path}/job__{$queueName}__{$id}.data");
-            $this->delete($queueName, $id);
-            return $content;
+            return [$id, file_get_contents("{$this->path}/job__{$queueName}__{$id}.data")];
         }
 
         return null;
@@ -160,50 +202,6 @@ class FileConnection extends BaseConnection implements DriverInterface
     public function release(string $payload, string $queueName, $delay = 0)
     {
 
-    }
-
-    /**
-     * Delete the message.
-     * @param string $queueName
-     * @param string $payload
-     * @return mixed
-     */
-    public function delete(string $queueName, string $payload)
-    {
-        $removed = false;
-        $this->touchIndex(function (&$data) use ($payload, &$removed) {
-            if (!empty($data['waiting'])) {
-                foreach ($data['waiting'] as $key => $_payload) {
-                    if ($_payload === $payload) {
-                        unset($data['waiting'][$key]);
-                        $removed = true;
-                        break;
-                    }
-                }
-            }
-            if (!$removed && !empty($data['delayed'])) {
-                foreach ($data['delayed'] as $key => $_payload) {
-                    if ($_payload === $payload) {
-                        unset($data['delayed'][$key]);
-                        $removed = true;
-                        break;
-                    }
-                }
-            }
-            if (!$removed && !empty($data['reserved'])) {
-                foreach ($data['reserved'] as $key => $_payload) {
-                    if ($_payload === $payload) {
-                        unset($data['reserved'][$key]);
-                        $removed = true;
-                        break;
-                    }
-                }
-            }
-            if ($removed) {
-                unlink("{$this->path}/job__{$queueName}__{$id}.data");
-            }
-        });
-        return $removed;
     }
 
     /**
